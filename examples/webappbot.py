@@ -10,6 +10,8 @@ require a bot token.
 """
 import json
 import logging
+import yaml
+import os
 
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler, InlineQueryHandler
@@ -20,6 +22,8 @@ logging.basicConfig(
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+botToken = ""
 
 logger = logging.getLogger(__name__)
 
@@ -95,10 +99,18 @@ async def inlineQueryFunc(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         result
     )
 
+def loadConfig() -> None:
+    global botToken
+    filename = os.path.join(os.path.dirname(__file__),'config.yaml').replace("\\","/")
+    with open(filename,'r') as f:
+        data = yaml.full_load(f.read())
+        botToken = data['botToken']
+
 def main() -> None:
     """Start the bot."""
+    loadConfig()
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("bot").build()
+    application = Application.builder().token(botToken).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(inlineButtonCallback))
@@ -106,7 +118,6 @@ def main() -> None:
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
