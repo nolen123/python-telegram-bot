@@ -11,8 +11,8 @@ require a bot token.
 import json
 import logging
 
-from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, WebAppInfo
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler, InlineQueryHandler
 
 # Enable logging
 logging.basicConfig(
@@ -23,43 +23,86 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+inlinePlayGameButton = InlineKeyboardButton(
+                text="Go Turnup",
+                web_app=WebAppInfo(url="https://tg-dev.badass.xyz/#/"),
+            )
+
+inlineCallbackMenuButton = InlineKeyboardButton(
+                text="Menu",
+                callback_data="/menu",
+            )
+
+inlineJumpToChatRoom = InlineKeyboardButton(
+                text="Chat",
+                url="https://t.me/+pc0UVo5LbhQ1NDQ9",
+            )
+
+inlineJumpToAnnouncementChannel = InlineKeyboardButton(
+                text="Announcement",
+                url="https://t.me/+Glz9IcORjX80OTg1",
+            )
+
+inlineShareButton = InlineKeyboardButton(
+                text="Share",
+                switch_inline_query="",
+            )
 
 # Define a `/start` command handler.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message with a button that opens a the web app."""
     await update.message.reply_text(
-        "Please press the button below to choose a color via the WebApp.",
-        reply_markup=ReplyKeyboardMarkup.from_button(
-            KeyboardButton(
-                text="Open the color picker!",
-                web_app=WebAppInfo(url="https://python-telegram-bot.org/static/webappbot"),
-            )
+        text="Welcome to TURNUP for Telegram",
+        parse_mode="Html",
+    )
+    inlineButtonRow = []
+    inlineButtonRow.append(inlinePlayGameButton)
+    inlineButtonRow.append(inlineCallbackMenuButton)
+    await update.message.reply_photo(
+        photo="https://tg-dev.badass.xyz/default-assets/welcome_image.jpg",
+        caption="Play TURNUP Trivia\nEarn $100 Rewards Everyday",
+        reply_markup=InlineKeyboardMarkup.from_row(
+            inlineButtonRow
         ),
     )
 
+async def inlineButtonCallback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if query.data == "/menu" :
+        inlineButtonRow = [[],[]]
+        inlineButtonRow[0].append(inlinePlayGameButton)
+        inlineButtonRow[0].append(inlineJumpToChatRoom)
+        inlineButtonRow[1].append(inlineJumpToAnnouncementChannel)
+        inlineButtonRow[1].append(inlineShareButton)
+        await query.get_bot().send_photo(
+            chat_id=query.message.chat.id,
+            photo="https://tg-dev.badass.xyz/default-assets/go_turnup_image.jpg",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=inlineButtonRow
+            ),
+        )
+    await query.answer()
 
-# Handle incoming WebAppData
-async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Print the received data and remove the button."""
-    # Here we use `json.loads`, since the WebApp sends the data JSON serialized string
-    # (see webappbot.html)
-    data = json.loads(update.effective_message.web_app_data.data)
-    await update.message.reply_html(
-        text=(
-            f"You selected the color with the HEX value <code>{data['hex']}</code>. The "
-            f"corresponding RGB value is <code>{tuple(data['rgb'].values())}</code>."
-        ),
-        reply_markup=ReplyKeyboardRemove(),
+async def inlineQueryFunc(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.inline_query
+    result = []
+    result.append(InlineQueryResultArticle(
+        id=query.id,
+        title="Go Turnup",
+        input_message_content=InputTextMessageContent("https://t.me/TURNUP_Telegram_bot/TurnUpApp ")
+    ))
+    await query.answer(
+        result
     )
-
 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("TOKEN").build()
+    application = Application.builder().token("bot").build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
+    application.add_handler(CallbackQueryHandler(inlineButtonCallback))
+    application.add_handler(InlineQueryHandler(inlineQueryFunc))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
