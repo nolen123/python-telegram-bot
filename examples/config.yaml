@@ -1,1 +1,3 @@
-botToken: <botToken>
+botToken: <bot_token>
+twaUrl: <twa_url>
+turnupUrl: <turnup_url>

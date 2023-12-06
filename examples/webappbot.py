@@ -24,37 +24,19 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 botToken = ""
+twaUrl = ""
+turnupUrl = ""
 
 logger = logging.getLogger(__name__)
 
-inlinePlayGameButton = InlineKeyboardButton(
-                text="Go Turnup",
-                web_app=WebAppInfo(url="https://tg-dev.badass.xyz/#/"),
-            )
-
-inlineCallbackMenuButton = InlineKeyboardButton(
-                text="Menu",
-                callback_data="/menu",
-            )
-
-inlineJumpToChatRoom = InlineKeyboardButton(
-                text="Chat",
-                url="https://t.me/+pc0UVo5LbhQ1NDQ9",
-            )
-
-inlineJumpToAnnouncementChannel = InlineKeyboardButton(
-                text="Announcement",
-                url="https://t.me/+Glz9IcORjX80OTg1",
-            )
-
-inlineShareButton = InlineKeyboardButton(
-                text="Share",
-                switch_inline_query="",
-            )
+inlinePlayGameButton = None
+inlineCallbackMenuButton = None
+inlineJumpToChatRoom = None
+inlineJumpToAnnouncementChannel = None
+inlineShareButton = None
 
 # Define a `/start` command handler.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message with a button that opens a the web app."""
     await update.message.reply_text(
         text="Welcome to TURNUP for Telegram",
         parse_mode="Html",
@@ -88,12 +70,13 @@ async def inlineButtonCallback(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
 
 async def inlineQueryFunc(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    global twaUrl
     query = update.inline_query
     result = []
     result.append(InlineQueryResultArticle(
         id=query.id,
         title="Go Turnup",
-        input_message_content=InputTextMessageContent("https://t.me/TURNUP_Telegram_bot/TurnUpApp ")
+        input_message_content=InputTextMessageContent(twaUrl)
     ))
     await query.answer(
         result
@@ -101,14 +84,47 @@ async def inlineQueryFunc(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 def loadConfig() -> None:
     global botToken
+    global twaUrl
+    global turnupUrl
     filename = os.path.join(os.path.dirname(__file__),'config.yaml').replace("\\","/")
     with open(filename,'r') as f:
         data = yaml.full_load(f.read())
         botToken = data['botToken']
+        twaUrl = data['twaUrl']
+        turnupUrl = data['turnupUrl']
+
+def initButton() -> None:
+    global turnupUrl
+    global inlinePlayGameButton
+    inlinePlayGameButton = InlineKeyboardButton(
+            text="Go Turnup",
+            web_app=WebAppInfo(url=turnupUrl),
+        )
+    global inlineCallbackMenuButton
+    inlineCallbackMenuButton = InlineKeyboardButton(
+            text="Menu",
+            callback_data="/menu",
+        )
+    global inlineJumpToChatRoom
+    inlineJumpToChatRoom = InlineKeyboardButton(
+            text="Chat",
+            url="https://t.me/+pc0UVo5LbhQ1NDQ9",
+        )
+    global inlineJumpToAnnouncementChannel
+    inlineJumpToAnnouncementChannel = InlineKeyboardButton(
+            text="Announcement",
+            url="https://t.me/+Glz9IcORjX80OTg1",
+        )
+    global inlineShareButton
+    inlineShareButton = InlineKeyboardButton(
+            text="Share",
+            switch_inline_query="",
+        )
 
 def main() -> None:
     """Start the bot."""
     loadConfig()
+    initButton()
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(botToken).build()
 
