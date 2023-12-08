@@ -52,6 +52,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ),
     )
 
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    inlineButtonRow = [[],[]]
+    inlineButtonRow[0].append(inlinePlayGameButton)
+    inlineButtonRow[0].append(inlineJumpToChatRoom)
+    inlineButtonRow[1].append(inlineJumpToAnnouncementChannel)
+    inlineButtonRow[1].append(inlineShareButton)
+    await update.message.reply_photo(
+        photo="https://tg-dev.badass.xyz/default-assets/go_turnup_image.jpg",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=inlineButtonRow
+        ),
+    )
+
 async def inlineButtonCallback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if query.data == "/menu" :
@@ -129,6 +142,7 @@ def main() -> None:
     application = Application.builder().token(botToken).build()
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("menu", menu))
     application.add_handler(CallbackQueryHandler(inlineButtonCallback))
     application.add_handler(InlineQueryHandler(inlineQueryFunc))
 
